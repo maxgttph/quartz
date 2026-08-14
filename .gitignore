@@ -12,3 +12,11 @@ replit.nix
 .quartz/
 quartz/cli/tui/dist/
 .turbo/
+
+# Careful: Quartz globs both content/ and quartz/static/ with `gitignore: true`
+# (quartz/util/glob.ts), so a rule here does not merely hide files from git —
+# it hides them from the build. Adding `content/` silently produced a site with
+# zero notes. Anything under those two directories must therefore stay out of
+# this file; content/ is excluded from version control via .git/info/exclude
+# instead, and the generated assets in quartz/static/fonts and quartz/static/katex
+# are committed (regenerate them with `npm run assets`).

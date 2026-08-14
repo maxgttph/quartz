@@ -19,7 +19,12 @@
     "test": "tsx --test",
     "profile": "0x -D prof ./quartz/bootstrap-cli.mjs build --concurrency=1",
     "install-plugins": "npx tsx ./quartz/plugins/loader/install-plugins.ts",
-    "prebuild": "npm run install-plugins"
+    "prebuild": "npm run install-plugins",
+    "sync": "node scripts/sync.mjs",
+    "build": "./scripts/build.sh",
+    "dev": "node scripts/assets.mjs && node scripts/sync.mjs && npx quartz build --serve",
+    "deploy": "./scripts/build.sh && ./scripts/deploy.sh",
+    "assets": "node scripts/assets.mjs"
   },
   "engines": {
     "npm": ">=10.9.2",
@@ -54,7 +59,6 @@
     "@quartz-community/content-meta": "^0.1.0",
     "@quartz-community/content-page": "^0.1.0",
     "@quartz-community/crawl-links": "^0.1.0",
-    "@quartz-themes/core": "^1.0.0",
     "@quartz-community/created-modified-date": "^0.1.0",
     "@quartz-community/darkmode": "^0.1.0",
     "@quartz-community/description": "^0.1.0",
@@ -86,6 +90,7 @@
     "@quartz-community/tag-list": "^0.1.0",
     "@quartz-community/tag-page": "^0.1.0",
     "@quartz-community/unlisted-pages": "^0.1.0",
+    "@quartz-themes/core": "^1.0.0",
     "ansi-truncate": "^1.4.0",
     "async-mutex": "^0.5.0",
     "chokidar": "^5.0.0",
@@ -118,6 +123,9 @@
     "yargs": "^18.0.0"
   },
   "devDependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/newsreader": "^5.3.0",
+    "@fontsource/source-serif-4": "^5.3.0",
     "@quartz-community/types": "^0.3.0",
     "@quartz-community/utils": "^0.1.0",
     "@types/hast": "^3.0.4",
@@ -127,6 +135,8 @@
     "@types/ws": "^8.18.1",
     "@types/yargs": "^17.0.35",
     "esbuild": "^0.27.2",
+    "jetbrains-mono": "^1.0.6",
+    "katex": "^0.16.11",
     "prettier": "^3.8.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
