@@ -314,6 +314,11 @@ plugins:
       position: footer
       priority: 50
 
+  # The spacer is `flex: 2 1 auto` (base.scss). On mobile the left sidebar is a
+  # flex *row*, where that pushes the search and dark-mode toggle away from the
+  # site title. On desktop the same sidebar is a 100vh sticky *column*, so the
+  # spacer eats every spare pixel and drops the search and explorer to the
+  # bottom of the viewport. Hence mobile-only, as upstream ships it.
   - source: "@quartz-community/spacer"
     enabled: true
     options: {}
@@ -321,6 +326,7 @@ plugins:
     layout:
       position: left
       priority: 25
+      display: mobile-only
 
   # Kept at their shipped defaults: they register page types the dispatcher
   # expects, and cost nothing on a vault that uses none of them.
