@@ -57,7 +57,9 @@ export default (() => {
             )}
           </>
         )}
-        <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossOrigin="anonymous" />
+        {/* Upstream preconnects to cdnjs here, but this site loads nothing from
+            it: fonts and KaTeX are served from /static/ (see scripts/assets.mjs).
+            An unused preconnect just costs a DNS lookup and a TLS handshake. */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
         <meta name="og:site_name" content={cfg.pageTitle}></meta>

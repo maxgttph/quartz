@@ -1,3 +1,575 @@
 @use "./variables.scss" as *;
 
-// put your custom CSS here!
+/* ==========================================================================
+   Carnet d'apprentissage — editorial theme
+   --------------------------------------------------------------------------
+   A reading site, not a docs site: a single narrow serif column for prose,
+   with all navigation furniture set in a small grotesk so it never competes
+   with the text.
+
+   The vault's note structure is rigidly uniform — every note has the same six
+   `##` sections in the same order — so sections are styled by their slugified
+   heading id (#tldr, #key-concepts, …). Those ids come from the headings
+   themselves; if the vault ever renames a section, the rule simply stops
+   applying and the section falls back to plain prose.
+   ========================================================================== */
+
+:root {
+  --font-ui: var(--font-interface, var(--bodyFont));
+
+  /* ~68 characters at the body size below. */
+  --measure: 34rem;
+
+  --lede-size: 1.2rem;
+  --rule: 1px solid var(--lightgray);
+}
+
+/* --------------------------------------------------------------------------
+   Base reading column
+   -------------------------------------------------------------------------- */
+
+body {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  /* French runs long and the column is narrow; let it break. */
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  text-rendering: optimizeLegibility;
+  font-variant-numeric: oldstyle-num proportional-nums;
+}
+
+.center {
+  article,
+  .page-header {
+    max-width: var(--measure);
+  }
+}
+
+article {
+  p,
+  li {
+    /* Prose hyphenates; short structural text should not. */
+    hyphens: auto;
+  }
+
+  /* Tabular figures read better inside math-adjacent prose. */
+  .katex,
+  code,
+  pre {
+    hyphens: none;
+    -webkit-hyphens: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Headings
+   -------------------------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.22;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+
+.article-title {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin: 0.35rem 0 0;
+}
+
+article {
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 3rem;
+    padding-bottom: 0.35rem;
+    border-bottom: var(--rule);
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 2.25rem;
+  }
+
+  h4 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 1.75rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   TL;DR — the lede
+   --------------------------------------------------------------------------
+   Every note opens with `## TL;DR` followed by a single blockquote. The
+   heading is demoted to a small eyebrow (kept in the DOM so it still anchors
+   the table of contents) and the quote itself carries the weight.
+   -------------------------------------------------------------------------- */
+
+article h2#tldr {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gray);
+  border-bottom: none;
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0;
+}
+
+article h2#tldr + blockquote {
+  margin: 0 0 2.5rem;
+  padding: 0.1rem 0 0.1rem 1.4rem;
+  border-left: 2px solid var(--secondary);
+  font-size: var(--lede-size);
+  line-height: 1.62;
+  color: var(--dark);
+  /* Upright: the lede is the note's opening statement, not an aside. */
+  font-style: normal;
+
+  p {
+    margin: 0.4rem 0;
+  }
+
+  strong {
+    font-weight: 600;
+  }
+}
+
+/* Ordinary in-body pull quotes stay quieter than the lede. */
+article blockquote {
+  border-left: 2px solid var(--lightgray);
+  color: var(--darkgray);
+  font-style: italic;
+
+  strong {
+    font-style: normal;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Key concepts — term / definition
+   --------------------------------------------------------------------------
+   Notes write these as `- **Term** — definition.`, so the leading <strong>
+   becomes the term line and the rest falls beneath it.
+   -------------------------------------------------------------------------- */
+
+article h2#key-concepts + ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 1.25rem;
+
+  > li {
+    margin-bottom: 1.1rem;
+    padding-left: 1rem;
+    border-left: var(--rule);
+
+    > strong:first-child {
+      display: block;
+      font-family: var(--font-ui);
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: var(--secondary);
+      margin-bottom: 0.1rem;
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Related notes — colophon
+   -------------------------------------------------------------------------- */
+
+article h2#related-notes {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gray);
+  border-bottom: none;
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: var(--rule);
+}
+
+article h2#related-notes + ul {
+  list-style: none;
+  padding-left: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+
+  > li {
+    margin: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Code fences — ASCII diagrams
+   --------------------------------------------------------------------------
+   No fence in the vault carries a language tag; they hold box-drawing
+   diagrams (─ ┬ │ └ ↑ →). Tight leading keeps the strokes connected, and the
+   block scrolls rather than wrapping — a wrapped diagram is unreadable.
+   -------------------------------------------------------------------------- */
+
+article pre {
+  overflow-x: auto;
+  padding: 1rem 1.1rem;
+  border: var(--rule);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--lightgray) 26%, transparent);
+  line-height: 1.35;
+  font-size: 0.85rem;
+
+  > code {
+    font-family: var(--codeFont);
+    font-variant-ligatures: none;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+}
+
+article :not(pre) > code {
+  font-size: 0.88em;
+  padding: 0.12em 0.32em;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--lightgray) 40%, transparent);
+  border: none;
+}
+
+/* --------------------------------------------------------------------------
+   Math
+   --------------------------------------------------------------------------
+   53 display blocks, some very wide (nuclear fusion balances, attention
+   definitions). They scroll horizontally instead of overflowing the column.
+   -------------------------------------------------------------------------- */
+
+article .katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.55rem 0;
+  margin: 1.4rem 0;
+}
+
+article .katex {
+  /* Slightly larger than the surrounding serif, which has a small x-height
+     relative to KaTeX's Computer Modern. */
+  font-size: 1.04em;
+}
+
+/* --------------------------------------------------------------------------
+   Tables — 18 notes, some with bold + LaTeX + wiki-links inside cells
+   -------------------------------------------------------------------------- */
+
+article table {
+  display: block;
+  overflow-x: auto;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 1.75rem 0;
+  border: none;
+
+  thead {
+    font-family: var(--font-ui);
+  }
+
+  th {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--gray);
+    text-align: left;
+    vertical-align: bottom;
+    border: none;
+    border-bottom: 1px solid var(--darkgray);
+    padding: 0.5rem 0.9rem 0.5rem 0;
+  }
+
+  td {
+    border: none;
+    border-bottom: var(--rule);
+    padding: 0.6rem 0.9rem 0.6rem 0;
+    vertical-align: top;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Images — remote Wikimedia diagrams in the meteorology notes
+   -------------------------------------------------------------------------- */
+
+article img {
+  display: block;
+  margin: 1.75rem auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  /* Many are transparent SVGs authored for a white background. */
+  background: #fff;
+  padding: 0.5rem;
+  border: var(--rule);
+}
+
+/* --------------------------------------------------------------------------
+   Links
+   -------------------------------------------------------------------------- */
+
+article a {
+  text-decoration: none;
+  background-image: linear-gradient(var(--secondary), var(--secondary));
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  transition: background-size 0.15s ease;
+
+  &:hover {
+    background-size: 100% 2px;
+  }
+
+  &.internal {
+    background-color: transparent;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  &[role="anchor"] {
+    background-image: none;
+  }
+}
+
+/* Link-only lists (Related notes, the homepage index) read as navigation, not
+   as prose. A rule under every entry turns them into a thicket. */
+article li > a:only-child,
+article h2#related-notes + ul a,
+body[data-slug="index"] article li a {
+  background-image: none;
+
+  &:hover {
+    color: var(--tertiary);
+    background-image: linear-gradient(var(--tertiary), var(--tertiary));
+    background-size: 100% 1px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Figures break the measure
+   --------------------------------------------------------------------------
+   Tables, ASCII diagrams and display equations are figures, not prose. Letting
+   them run wider than the reading column keeps table cells off two lines and
+   equations off the scrollbar, without widening the text itself.
+   -------------------------------------------------------------------------- */
+
+@media #{$desktop} {
+  article {
+    table,
+    pre,
+    .katex-display,
+    img {
+      width: calc(var(--measure) + 8rem);
+      max-width: calc(100vw - 4rem);
+    }
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Page furniture — everything outside the prose column
+   -------------------------------------------------------------------------- */
+
+.breadcrumb-container,
+.content-meta,
+.tags,
+.explorer,
+.toc,
+.backlinks,
+.graph,
+.search,
+.page-title,
+footer,
+.darkmode,
+.readermode {
+  font-family: var(--font-ui);
+}
+
+.breadcrumb-container {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.75rem;
+
+  a {
+    color: var(--gray);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--secondary);
+    }
+  }
+
+  .breadcrumb-element:last-child a {
+    color: var(--darkgray);
+  }
+
+  p {
+    color: var(--lightgray);
+  }
+}
+
+.content-meta {
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: var(--gray);
+  margin-top: 0.5rem;
+  font-style: normal;
+}
+
+.page-header .tags {
+  margin-top: 0.9rem;
+  gap: 0.4rem;
+
+  .tag-link {
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--lightgray) 45%, transparent);
+    color: var(--gray);
+
+    &::before {
+      content: "#";
+      opacity: 0.5;
+    }
+
+    &:hover {
+      color: var(--secondary);
+      background: var(--highlight);
+    }
+  }
+}
+
+.page-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+
+  a {
+    font-family: var(--titleFont, var(--headerFont));
+    font-size: 1.25rem;
+  }
+}
+
+.sidebar {
+  font-size: 0.85rem;
+
+  h2,
+  h3 {
+    font-family: var(--font-ui);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gray);
+  }
+}
+
+.toc,
+.backlinks {
+  ul,
+  li {
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+}
+
+footer {
+  font-size: 0.78rem;
+  color: var(--gray);
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: var(--rule);
+}
+
+/* --------------------------------------------------------------------------
+   Homepage — generated index.md
+   --------------------------------------------------------------------------
+   Its opening blockquote gets the same lede treatment as a note's TL;DR, and
+   the per-domain lists run in columns so all 34 notes stay above the fold on
+   a desktop screen.
+   -------------------------------------------------------------------------- */
+
+body[data-slug="index"] {
+  article > .markdown-preview-view > blockquote:first-child,
+  article > blockquote:first-child {
+    margin: 0 0 2.75rem;
+    padding: 0.1rem 0 0.1rem 1.4rem;
+    border-left: 2px solid var(--secondary);
+    font-size: var(--lede-size);
+    line-height: 1.62;
+    color: var(--dark);
+    font-style: normal;
+  }
+
+  article h3 {
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gray);
+    margin-top: 2.25rem;
+  }
+
+  /* The "N fiches." line under each domain heading. */
+  article h3 + p {
+    display: none;
+  }
+
+  article h3 + p + ul {
+    columns: 2;
+    column-gap: 2rem;
+    padding-left: 0;
+    list-style: none;
+
+    li {
+      break-inside: avoid;
+      margin-bottom: 0.35rem;
+    }
+  }
+}
+
+@media #{$mobile} {
+  body[data-slug="index"] article h3 + p + ul {
+    columns: 1;
+  }
+
+  :root {
+    --measure: 100%;
+    --lede-size: 1.1rem;
+  }
+
+  body {
+    font-size: 1rem;
+  }
+
+  .article-title {
+    font-size: 1.7rem;
+  }
+}

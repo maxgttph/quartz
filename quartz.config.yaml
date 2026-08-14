@@ -1,0 +1,378 @@
+# yaml-language-server: $schema=./quartz/plugins/quartz-plugins.schema.json
+#
+# Site config for the learning vault.
+# Content is not stored here: `scripts/sync.mjs` regenerates `content/` as a set
+# of symlinks into ~/learning-vault plus a generated index.md.
+
+configuration:
+  pageTitle: "Carnet d'apprentissage"
+  pageTitleSuffix: ""
+  enableSPA: true
+  # Hover previews matter a lot here: the vault has ~380 wiki-links.
+  enablePopovers: true
+  analytics: null
+  # Drives UI strings and date formatting ("28 juin 2026"). 24 of 34 notes are French.
+  locale: fr-FR
+  # TODO: replace with the real subdomain. Used by RSS, sitemap and og-image.
+  baseUrl: notes.example.com
+  # content/ only ever contains topic symlinks + index.md, so these are a
+  # safety net rather than the primary filter.
+  ignorePatterns:
+    - .obsidian
+    - _templates
+    - _index
+  theme:
+    cdnCaching: true
+    typography:
+      header: Newsreader
+      body: Source Serif 4
+      code: JetBrains Mono
+    colors:
+      # Warm paper, deep ink, a single oxblood accent.
+      lightMode:
+        light: "#fdfbf7"
+        lightgray: "#e7e0d5"
+        gray: "#a49b8f"
+        darkgray: "#3c3630"
+        dark: "#1b1815"
+        secondary: "#8a3a2e"
+        tertiary: "#b5654f"
+        highlight: rgba(138, 58, 46, 0.07)
+        textHighlight: "#f0d97d88"
+      darkMode:
+        light: "#15120f"
+        lightgray: "#302a24"
+        gray: "#6d645a"
+        darkgray: "#d9d3c9"
+        dark: "#f3eee5"
+        secondary: "#d98b74"
+        tertiary: "#e8a892"
+        highlight: rgba(217, 139, 116, 0.10)
+        textHighlight: "#8a6d1f88"
+
+plugins:
+  - source: "@quartz-community/created-modified-date"
+    enabled: true
+    options:
+      # Notes carry an authored `created:` date; prefer it over git/filesystem.
+      defaultDateType: created
+      # No git: content/ is symlinks into another repo, so this repo's history
+      # knows nothing about the notes. Frontmatter `created` is authoritative.
+      priority:
+        - frontmatter
+        - filesystem
+    order: 10
+
+  # Kept on for future-proofing. Every code fence in the vault is untagged and
+  # holds box-drawing ASCII diagrams, so Shiki leaves them as plain text; the
+  # look comes from custom.scss.
+  - source: "@quartz-community/syntax-highlighting"
+    enabled: true
+    options:
+      theme:
+        light: github-light
+        dark: github-dark
+      keepBackground: false
+    order: 20
+
+  - source: "@quartz-community/obsidian-flavored-markdown"
+    enabled: true
+    options:
+      enableInHtmlEmbed: false
+      enableCheckbox: true
+    order: 30
+
+  # Tables (18 notes) and autolinks <https://…> (the meteorology "Schémas & vidéos" sections).
+  - source: "@quartz-community/github-flavored-markdown"
+    enabled: true
+    order: 40
+
+  - source: "@quartz-community/table-of-contents"
+    enabled: true
+    order: 50
+    layout:
+      position: right
+      priority: 30
+
+  # Vault wiki-links are bare basenames; every filename is unique.
+  - source: "@quartz-community/crawl-links"
+    enabled: true
+    options:
+      markdownLinkResolution: shortest
+    order: 60
+
+  - source: "@quartz-community/description"
+    enabled: true
+    order: 70
+
+  # 36 of 38 files use inline math, 54 display blocks across 14 notes.
+  - source: "@quartz-community/latex"
+    enabled: true
+    options:
+      renderEngine: katex
+    order: 80
+
+  - source: "@quartz-community/citations"
+    enabled: false
+    order: 85
+  - source: "@quartz-community/hard-line-breaks"
+    enabled: false
+    order: 90
+  - source: "@quartz-community/ox-hugo"
+    enabled: false
+    order: 91
+  - source: "@quartz-community/roam"
+    enabled: false
+    order: 92
+
+  - source: "@quartz-community/quartz-fonts"
+    enabled: true
+    options:
+      # selfHosted makes the plugin emit a single <link> to
+      # /static/fonts/quartz-fonts.css instead of calling out to Google. That
+      # file and its woff2 files are produced by scripts/assets.mjs, not by the
+      # plugin's own FontsEmitter — which quartz.ts removes. See the header
+      # comment in scripts/assets.mjs for why.
+      fontOrigin: selfHosted
+      useThemeFonts: false
+      title:
+        name: Newsreader
+        weights: [500, 600]
+        includeItalic: false
+      header:
+        name: Newsreader
+        weights: [500, 600]
+        includeItalic: false
+      body:
+        name: Source Serif 4
+        weights: [400, 600, 700]
+        includeItalic: true
+      code:
+        name: JetBrains Mono
+        weights: [400, 500]
+        includeItalic: false
+      # Chrome only (breadcrumbs, metadata, explorer, search) — see custom.scss.
+      interface:
+        name: Inter
+        weights: [400, 500, 600]
+        includeItalic: false
+
+  - source: "@quartz-themes/core"
+    enabled: false
+
+  # "Publish everything": no note in the vault carries draft/publish flags.
+  - source: "@quartz-community/remove-draft"
+    enabled: true
+  - source: "@quartz-community/explicit-publish"
+    enabled: false
+
+  # 22 notes declare `aliases`; this emits redirect pages for them.
+  - source: "@quartz-community/alias-redirects"
+    enabled: true
+
+  - source: "@quartz-community/content-index"
+    enabled: true
+    options:
+      enableSiteMap: true
+      enableRSS: true
+
+  - source: "@quartz-community/favicon"
+    enabled: true
+  - source: "@quartz-community/og-image"
+    enabled: true
+
+  # GitHub Pages only; this site deploys by rsync.
+  - source: "@quartz-community/cname"
+    enabled: false
+  # No .canvas files in the vault.
+  - source: "@quartz-community/canvas-page"
+    enabled: false
+
+  - source: "@quartz-community/content-page"
+    enabled: true
+  - source: "@quartz-community/folder-page"
+    enabled: true
+  - source: "@quartz-community/tag-page"
+    enabled: true
+
+  - source: "@quartz-community/explorer"
+    enabled: true
+    layout:
+      position: left
+      priority: 50
+
+  # Physics tuned to match the vault's own .obsidian/graph.json, which is
+  # calibrated for these 5 near-disjoint topic clusters.
+  - source: "@quartz-community/graph"
+    enabled: true
+    options:
+      localGraph:
+        repelForce: 1.0
+        linkDistance: 30
+        showTags: false
+      globalGraph:
+        repelForce: 1.2
+        linkDistance: 40
+        showTags: false
+    layout:
+      position: right
+      priority: 10
+
+  - source: "@quartz-community/search"
+    enabled: true
+    layout:
+      position: left
+      priority: 20
+      group: toolbar
+      groupOptions:
+        grow: true
+
+  - source: "@quartz-community/backlinks"
+    enabled: true
+    layout:
+      position: right
+      priority: 50
+
+  - source: "@quartz-community/article-title"
+    enabled: true
+    layout:
+      position: beforeBody
+      priority: 10
+
+  - source: "@quartz-community/content-meta"
+    enabled: true
+    layout:
+      position: beforeBody
+      priority: 20
+
+  - source: "@quartz-community/tag-list"
+    enabled: true
+    layout:
+      position: beforeBody
+      priority: 30
+
+  - source: "@quartz-community/page-title"
+    enabled: true
+    layout:
+      position: left
+      priority: 10
+
+  - source: "@quartz-community/darkmode"
+    enabled: true
+    layout:
+      position: left
+      priority: 30
+      group: toolbar
+
+  - source: "@quartz-community/reader-mode"
+    enabled: true
+    layout:
+      position: left
+      priority: 35
+      group: toolbar
+
+  - source: "@quartz-community/breadcrumbs"
+    enabled: true
+    options:
+      rootName: Accueil
+      spacerSymbol: "›"
+    layout:
+      position: beforeBody
+      priority: 5
+      condition: not-index
+
+  - source: "@quartz-community/comments"
+    enabled: false
+
+  # Parses the `---` frontmatter block. Required: without it the YAML is read as
+  # body text and every note renders its frontmatter as a setext heading.
+  # The properties panel itself is hidden — tags are surfaced by tag-list, and
+  # the editorial layout has no room for a metadata table above the lede.
+  - source: "@quartz-community/note-properties"
+    enabled: true
+    options:
+      includeAll: false
+      includedProperties:
+        - description
+        - tags
+        - aliases
+      excludedProperties: []
+      hidePropertiesView: true
+      delimiters: ---
+      language: yaml
+    order: 5
+    layout:
+      position: beforeBody
+      priority: 15
+      display: all
+
+  - source: "@quartz-community/footer"
+    enabled: true
+    options:
+      links: {}
+    layout:
+      position: footer
+      priority: 50
+
+  - source: "@quartz-community/spacer"
+    enabled: true
+    options: {}
+    order: 25
+    layout:
+      position: left
+      priority: 25
+
+  # Kept at their shipped defaults: they register page types the dispatcher
+  # expects, and cost nothing on a vault that uses none of them.
+  - source: "@quartz-community/bases-page"
+    enabled: true
+    options: {}
+    order: 50
+  - source: "@quartz-community/unlisted-pages"
+    enabled: true
+    options: {}
+    order: 45
+  - source: "@quartz-community/encrypted-pages"
+    enabled: true
+    options:
+      iterations: 600000
+      passwordField: password
+      unlistWhenEncrypted: false
+      outputPath: static/encryptedContentIndex.json
+    order: 46
+
+  # The generated index.md already surfaces recency.
+  - source: "@quartz-community/recent-notes"
+    enabled: false
+  - source: "@quartz-community/stacked-pages"
+    enabled: false
+    layout:
+      position: afterBody
+      priority: 50
+      display: all
+
+layout:
+  groups:
+    toolbar:
+      priority: 35
+      direction: row
+      gap: 0.5rem
+  byPageType:
+    "404":
+      positions:
+        beforeBody: []
+        left: []
+        right: []
+    content: {}
+    folder:
+      exclude:
+        - reader-mode
+      positions:
+        right: []
+    tag:
+      exclude:
+        - reader-mode
+      positions:
+        right: []
+    canvas: {}
+    bases: {}
