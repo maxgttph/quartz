@@ -404,10 +404,57 @@ body[data-slug="index"] article li a {
 .graph,
 .search,
 .page-title,
+.lang-switcher,
 footer,
 .darkmode,
 .readermode {
   font-family: var(--font-ui);
+}
+
+/* The language switcher sits on the breadcrumb line, flush right.
+   Taken out of the flow rather than laid out in a grid so the header keeps its
+   block formatting — the breadcrumbs, title, metadata and tags below all rely
+   on their vertical margins collapsing into each other.
+   The reserved padding is what keeps a long title from running underneath it,
+   including on the homepage, which has no breadcrumbs to share the line with. */
+.page-header > .popover-hint {
+  position: relative;
+  padding-right: 3.5rem;
+}
+
+.lang-switcher {
+  position: absolute;
+  top: 0.75rem;
+  right: 0;
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+
+  a,
+  .lang-current {
+    color: var(--gray);
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: var(--secondary);
+  }
+
+  /* `npm run dev` serves one language alone at the root, so the others are
+     shown but not offered. Production builds never render this. */
+  .lang-unreachable {
+    color: var(--lightgray);
+    cursor: help;
+  }
+
+  .lang-current {
+    color: var(--darkgray);
+    /* The active language is a label, not a link: mark it as such rather than
+       leaving two identical-looking words with different behaviour. */
+    border-bottom: 1px solid var(--lightgray);
+  }
 }
 
 .breadcrumb-container {

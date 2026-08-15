@@ -22,7 +22,10 @@
     "prebuild": "npm run install-plugins",
     "sync": "node scripts/sync.mjs",
     "build": "./scripts/build.sh",
-    "dev": "node scripts/assets.mjs && node scripts/sync.mjs && npx quartz build --serve",
+    "dev": "npm run dev:fr",
+    "dev:fr": "node scripts/assets.mjs && node scripts/sync.mjs && QUARTZ_LANG=fr npx quartz build -d content/fr -o public/fr --serve",
+    "dev:en": "node scripts/assets.mjs && node scripts/sync.mjs && QUARTZ_LANG=en npx quartz build -d content/en -o public/en --serve",
+    "preview": "./scripts/build.sh && node scripts/preview.mjs",
     "deploy": "./scripts/build.sh && ./scripts/deploy.sh",
     "assets": "node scripts/assets.mjs"
   },

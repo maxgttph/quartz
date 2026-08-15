@@ -1,8 +1,15 @@
 # yaml-language-server: $schema=./quartz/plugins/quartz-plugins.schema.json
 #
 # Site config for the learning vault.
-# Content is not stored here: `scripts/sync.mjs` regenerates `content/` as a set
-# of symlinks into ~/learning-vault plus a generated index.md.
+#
+# Content is not stored here: `scripts/sync.mjs` regenerates `content/<lang>/`
+# as a set of symlinks into ~/learning-vault plus generated index pages.
+#
+# The vault is bilingual and the site is built once per language
+# (`scripts/build.sh`), so anything that has to vary by language is set from
+# `QUARTZ_LANG` in quartz.ts rather than here: `pageTitle`, `locale`, `baseUrl`
+# and the breadcrumbs' `rootName`. The values below are the French ones, kept
+# as documentation and as the fallback when the build runs without the env var.
 
 configuration:
   pageTitle: "Carnet d'apprentissage"
@@ -11,12 +18,14 @@ configuration:
   # Hover previews matter a lot here: the vault has ~380 wiki-links.
   enablePopovers: true
   analytics: null
-  # Drives UI strings and date formatting ("28 juin 2026"). 24 of 34 notes are French.
+  # Drives UI strings and date formatting ("28 juin 2026"). Overridden per
+  # build in quartz.ts (fr-FR / en-GB).
   locale: fr-FR
   # TODO: replace with the real subdomain. Used by RSS, sitemap and og-image.
+  # quartz.ts appends the language prefix, giving notes.example.com/fr.
   baseUrl: notes.example.com
-  # content/ only ever contains topic symlinks + index.md, so these are a
-  # safety net rather than the primary filter.
+  # content/<lang>/ only ever contains note symlinks + generated index.md files,
+  # so these are a safety net rather than the primary filter.
   ignorePatterns:
     - .obsidian
     - _templates

@@ -1,8 +1,79 @@
+import { h } from "preact"
 import { loadQuartzConfig, loadQuartzLayout } from "./quartz/plugins/loader/config-loader"
+import { componentRegistry } from "./quartz/components/registry"
+import { PageTypeDispatcher } from "./quartz/plugins/pageTypes/dispatcher"
 import type { QuartzTransformerPluginInstance } from "./quartz/plugins/types"
+import type { ValidLocale } from "./quartz/i18n"
 import type { Root } from "mdast"
+import LanguageSwitcher, { type LanguageOption } from "./LanguageSwitcher"
+
+/**
+ * The vault holds every note in both languages (`<slug>.en.md`, `<slug>.fr.md`),
+ * and the site is built once per language: `QUARTZ_LANG` picks which one.
+ *
+ * One build per language rather than one build for both, because almost
+ * everything that makes a page feel localised is decided per *build* and not
+ * per page — the interface strings and date formats behind `locale`, and the
+ * search index, explorer tree, graph, RSS feed and sitemap, which are all
+ * emitted once from the whole content tree. Splitting the build is what keeps
+ * an English note from being served with French chrome and French search hits.
+ *
+ * Must match LANGS in scripts/sync.mjs.
+ */
+export const LANGUAGES: LanguageOption[] = [
+  { code: "fr", short: "FR", name: "Français" },
+  { code: "en", short: "EN", name: "English" },
+]
+
+const LOCALES: Record<string, ValidLocale> = { fr: "fr-FR", en: "en-GB" }
+const SITE_TITLES: Record<string, string> = {
+  fr: "Carnet d'apprentissage",
+  en: "Learning Vault",
+}
+const HOME_LABELS: Record<string, string> = { fr: "Accueil", en: "Home" }
+const SWITCHER_LABELS: Record<string, string> = { fr: "Choix de la langue", en: "Language" }
+const SWITCHER_HINTS: Record<string, string> = {
+  fr: "Les autres langues ne sont pas servies par `npm run dev` — utilisez `npm run preview`.",
+  en: "Other languages are not served by `npm run dev` — use `npm run preview`.",
+}
+
+const lang = process.env.QUARTZ_LANG ?? LANGUAGES[0].code
+if (!LANGUAGES.some((l) => l.code === lang)) {
+  throw new Error(
+    `QUARTZ_LANG="${lang}" inconnu — attendu : ${LANGUAGES.map((l) => l.code).join(", ")}.`,
+  )
+}
+
+/**
+ * URL prefix this build is served under, e.g. `/fr`. Empty during `--serve`,
+ * where the dev server mounts a single language at the root.
+ *
+ * Quartz derives the same prefix from `baseUrl` for its own client-side
+ * navigation (see `basePath` in quartz/components/renderPage.tsx); appending it
+ * to baseUrl below keeps the two in step from a single source of truth.
+ */
+const basePath = process.env.QUARTZ_BASE_PATH ?? ""
+
+/**
+ * A build under a language prefix sits next to its siblings, so the switcher
+ * can reach them. Without one, this build is alone at the root — the shape
+ * `npm run dev` produces — and the switcher must not offer a link that would
+ * only ever 404.
+ */
+const siblingsReachable = basePath !== ""
+
+// Component options come from quartz.config.yaml, which has no way to vary by
+// language. Overrides have to be registered before loadQuartzLayout() below
+// instantiates the components.
+componentRegistry.setOptionOverrides("@quartz-community/breadcrumbs", {
+  rootName: HOME_LABELS[lang],
+})
 
 const config = await loadQuartzConfig()
+
+config.configuration.locale = LOCALES[lang]
+config.configuration.pageTitle = SITE_TITLES[lang]
+config.configuration.baseUrl = (config.configuration.baseUrl ?? "") + basePath
 
 /**
  * Every note in the vault opens with `# Title`, duplicating frontmatter `title`.
@@ -87,9 +158,32 @@ const unwrapKeyConceptDashes: QuartzTransformerPluginInstance = {
   ],
 }
 
+/**
+ * Vault wiki-links carry the target's language: `[[solar-eclipses.fr]]`, and
+ * never cross languages (the vault's CLAUDE.md makes `translations:` the single
+ * bridge). Each build only ever sees one language, and scripts/sync.mjs drops
+ * the suffix from the filenames it links into content/, so the suffix in the
+ * link text is redundant here — and left alone it would resolve to nothing.
+ *
+ * Stripping it in the source, rather than rewriting the vault, keeps Obsidian's
+ * own link resolution working: it needs the suffix to tell the two files apart
+ * inside a single note folder.
+ */
+const linkLanguageSuffix = new RegExp(
+  // `[[<target>` … the target stops at the first `|`, `#` or `]`, and the pipe
+  // may be backslash-escaped — Obsidian requires that inside a table cell.
+  String.raw`(\[\[[^\[\]|#]+?)\.(?:${LANGUAGES.map((l) => l.code).join("|")})(?=\\?[|#\]])`,
+  "g",
+)
+
+const stripLinkLanguageSuffix: QuartzTransformerPluginInstance = {
+  name: "StripLinkLanguageSuffix",
+  textTransform: (_ctx, src) => src.replace(linkLanguageSuffix, "$1"),
+}
+
 // textTransform runs on raw source, so this must precede any parsing.
 config.plugins.transformers.unshift(stripLeadingH1, unwrapKeyConceptDashes)
-config.plugins.transformers.unshift(displayMathOnOwnLine)
+config.plugins.transformers.unshift(displayMathOnOwnLine, stripLinkLanguageSuffix)
 
 /**
  * The site is self-hosted, so it should not depend on third-party CDNs staying
@@ -108,19 +202,76 @@ config.plugins.transformers.unshift(displayMathOnOwnLine)
 config.plugins.emitters = config.plugins.emitters.filter((e) => e.name !== "FontsEmitter")
 
 /**
+ * `/static/…` is relative to the *build* root, which is the language prefix
+ * once deployed (`/fr/static/…`). Quartz builds its own asset URLs relative to
+ * each page, but the two hardcoded paths below are ours to prefix.
+ */
+const asset = (p: string) => `${basePath}/static/${p}`
+
+/**
+ * The fonts plugin hardcodes `/static/fonts/quartz-fonts.css` in the <link> it
+ * adds to <head>. Only that tag is replaced; the inline @font-face CSS it also
+ * returns is what declares the families, and is kept as-is.
+ */
+const fonts = config.plugins.transformers.find((t) => t.name === "Fonts")
+if (!fonts?.externalResources) {
+  throw new Error("Plugin Fonts introuvable — le préfixe de langue sur /static/fonts/ est caduc.")
+}
+const fontResources = fonts.externalResources.bind(fonts)
+fonts.externalResources = (ctx) => ({
+  ...fontResources(ctx),
+  additionalHead: [h("link", { rel: "stylesheet", href: asset("fonts/quartz-fonts.css") })],
+})
+
+/**
  * The latex plugin hardcodes cdn.jsdelivr.net for katex.min.css and the
  * copy-tex helper. Its options expose no way to change that, so the resource
- * list is swapped after the fact. Root-relative paths resolve correctly both
- * under `--serve` and on the deployed domain.
+ * list is swapped after the fact.
  */
 const latex = config.plugins.transformers.find((t) => t.name === "Latex")
 if (!latex) {
   throw new Error("Plugin Latex introuvable — la redirection KaTeX vers /static/ est caduque.")
 }
 latex.externalResources = () => ({
-  css: [{ content: "/static/katex/katex.min.css" }],
-  js: [{ src: "/static/katex/copy-tex.min.js", loadTime: "afterDOMReady", contentType: "external" }],
+  css: [{ content: asset("katex/katex.min.css") }],
+  js: [{ src: asset("katex/copy-tex.min.js"), loadTime: "afterDOMReady", contentType: "external" }],
+})
+
+/**
+ * The language switcher rides at the top of the page header, on the breadcrumb
+ * line (custom.scss pins it to the right). It is prepended by hand rather than
+ * slotted in by priority because quartz.config.yaml's `layout` block can only
+ * order components that come from plugins.
+ *
+ * Page types that deliberately empty their `beforeBody` — the 404 page — are
+ * left empty: a page with no slug has no counterpart to link to.
+ */
+const pageLayout = await loadQuartzLayout()
+const switcher = LanguageSwitcher({
+  current: lang,
+  languages: LANGUAGES,
+  ariaLabel: SWITCHER_LABELS[lang],
+  siblingsReachable,
+  unreachableHint: SWITCHER_HINTS[lang],
+})
+for (const l of [pageLayout.defaults, ...Object.values(pageLayout.byPageType)]) {
+  if (l.beforeBody?.length) l.beforeBody = [switcher, ...l.beforeBody]
+}
+
+/**
+ * loadQuartzConfig() already built its own layout and handed it to the emitter
+ * that renders every page, so editing the exported `layout` below would change
+ * nothing. The emitter is rebuilt in place on top of the amended layout — in
+ * place, so it keeps its position among the emitters.
+ */
+const dispatcher = config.plugins.emitters.findIndex((e) => e.name === "PageTypeDispatcher")
+if (dispatcher === -1) {
+  throw new Error("Émetteur PageTypeDispatcher introuvable — le sélecteur de langue est caduc.")
+}
+config.plugins.emitters[dispatcher] = PageTypeDispatcher({
+  defaults: pageLayout.defaults,
+  byPageType: pageLayout.byPageType,
 })
 
 export default config
-export const layout = await loadQuartzLayout()
+export const layout = pageLayout

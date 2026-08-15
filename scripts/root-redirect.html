@@ -1,0 +1,104 @@
+<!doctype html>
+<!--
+  Copied to public/index.html by scripts/build.sh.
+
+  The site itself lives entirely under /fr/ and /en/; this page only decides
+  which one a visitor lands on. It is a real page rather than a server-side
+  redirect so the choice can follow the browser's own language list, and so
+  that it still offers both doors when scripting is off.
+
+  Adding a language means adding it to LANGUAGES in quartz.ts, LANGS in
+  scripts/sync.mjs and scripts/build.sh — and then to the list below.
+-->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Carnet d'apprentissage · Learning Vault</title>
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href="fr/" />
+    <script>
+      // Runs before the body paints, so the fallback below is only ever seen
+      // without JavaScript — or if the browser asks for a language we do not have.
+      ;(function () {
+        var available = ["fr", "en"]
+        var fallback = "fr"
+        var wanted = navigator.languages || [navigator.language || fallback]
+        for (var i = 0; i < wanted.length; i++) {
+          var code = String(wanted[i]).toLowerCase().split("-")[0]
+          if (available.indexOf(code) !== -1) {
+            location.replace(code + "/")
+            return
+          }
+        }
+        location.replace(fallback + "/")
+      })()
+    </script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --paper: #fdfbf7;
+        --ink: #1b1815;
+        --muted: #a49b8f;
+        --accent: #8a3a2e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --paper: #15120f;
+          --ink: #f3eee5;
+          --muted: #6d645a;
+          --accent: #d98b74;
+        }
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+        text-align: center;
+      }
+      main {
+        padding: 2rem;
+      }
+      h1 {
+        font-size: 1.25rem;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        margin: 0 0 1.75rem;
+      }
+      h1 span {
+        color: var(--muted);
+        padding: 0 0.4rem;
+      }
+      ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+      }
+      a:hover {
+        border-bottom-color: currentColor;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Carnet d'apprentissage <span>·</span> Learning Vault</h1>
+      <ul>
+        <li><a href="fr/" hreflang="fr" lang="fr">Lire en français</a></li>
+        <li><a href="en/" hreflang="en" lang="en">Read in English</a></li>
+      </ul>
+    </main>
+  </body>
+</html>
