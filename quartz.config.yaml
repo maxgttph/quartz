@@ -3,7 +3,7 @@
 # Site config for the learning vault.
 #
 # Content is not stored here: `scripts/sync.mjs` regenerates `content/<lang>/`
-# as a set of symlinks into ~/learning-vault plus generated index pages.
+# as a set of symlinks into `vault/` plus generated index pages.
 #
 # The vault is bilingual and the site is built once per language
 # (`scripts/build.sh`), so anything that has to vary by language is set from

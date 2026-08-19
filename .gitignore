@@ -13,6 +13,11 @@ replit.nix
 quartz/cli/tui/dist/
 .turbo/
 
+# The Obsidian vault: a separate git repo (maxgttph/learning-vault) checked out
+# here so notes and site share one directory. Safe to ignore — Quartz never
+# globs vault/, only the symlinks that sync.mjs plants in content/.
+/vault/
+
 # Careful: Quartz globs both content/ and quartz/static/ with `gitignore: true`
 # (quartz/util/glob.ts), so a rule here does not merely hide files from git —
 # it hides them from the build. Adding `content/` silently produced a site with

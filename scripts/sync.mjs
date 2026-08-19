@@ -25,9 +25,12 @@ import fs from "node:fs/promises"
 import path from "node:path"
 import { parse as parseYaml } from "yaml"
 
-const VAULT = process.env.VAULT ?? "/home/maximilien/learning-vault"
 const SITE = path.resolve(import.meta.dirname, "..")
 const CONTENT = path.join(SITE, "content")
+
+// The vault lives inside the site checkout, under vault/ — its own git repo,
+// ignored here (see .gitignore). VAULT overrides it for a one-off build.
+const VAULT = path.resolve(process.env.VAULT ?? path.join(SITE, "vault"))
 
 /** Supported languages, default first. Must match LANGUAGES in quartz.ts. */
 const LANGS = ["fr", "en"]
@@ -262,11 +265,10 @@ async function main() {
     const present = []
     for (const note of notes) {
       if (!note.byLang[lang]) continue
-      await fs.symlink(
-        path.join(VAULT, note.dir, note.slug, note.byLang[lang]),
-        path.join(root, note.dir, `${note.slug}.md`),
-        "file",
-      )
+      const target = path.join(VAULT, note.dir, note.slug, note.byLang[lang])
+      const linkPath = path.join(root, note.dir, `${note.slug}.md`)
+      // Relative target: content/ survives a move of the whole checkout.
+      await fs.symlink(path.relative(path.dirname(linkPath), target), linkPath, "file")
       present.push(await noteMeta(note, lang))
     }
 
