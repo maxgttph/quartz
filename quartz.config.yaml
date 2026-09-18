@@ -23,7 +23,7 @@ configuration:
   locale: fr-FR
   # TODO: replace with the real subdomain. Used by RSS, sitemap and og-image.
   # quartz.ts appends the language prefix, giving notes.example.com/fr.
-  baseUrl: notes.example.com
+  baseUrl: learning.maxgtph.com
   # content/<lang>/ only ever contains note symlinks + generated index.md files,
   # so these are a safety net rather than the primary filter.
   ignorePatterns:
